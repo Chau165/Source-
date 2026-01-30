@@ -10,8 +10,9 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose port
-EXPOSE 8080
+# Railway uses dynamic PORT
+ENV PORT=8080
+EXPOSE ${PORT}
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run the application with Railway's dynamic port
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar app.jar"]
