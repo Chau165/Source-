@@ -5,6 +5,7 @@ import java02.group1.productcatalogmanagementsystem.entity.Category;
 import java02.group1.productcatalogmanagementsystem.service.CategoryService;
 import jakarta.transaction.Transactional;
 import java02.group1.productcatalogmanagementsystem.repository.ProductRepository;
+import java02.group1.productcatalogmanagementsystem.repository.CartItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java02.group1.productcatalogmanagementsystem.repository.CategoryRepository;
@@ -17,6 +18,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final CartItemRepository cartItemRepository;
 
     @Override
     public List<Category> getAllCategories() {
@@ -55,6 +57,11 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+
+        if (cartItemRepository.existsByProduct_Category_Id(id)) {
+            throw new IllegalArgumentException(
+                    "Không thể xóa danh mục này. Có sản phẩm thuộc danh mục này đang nằm trong giỏ hàng của khách.");
+        }
 
         productRepository.deleteByCategory_Id(id);
         categoryRepository.delete(category);

@@ -16,4 +16,12 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     @Query("SELECT COALESCE(SUM(ci.subTotal), 0) FROM CartItem ci WHERE ci.cart.id = :cartId")
     double sumSubTotalByCartId(@Param("cartId") Long cartId);
+
+    @Query("SELECT COALESCE(SUM(ci.quantity), 0) FROM CartItem ci WHERE ci.product.id = :productId")
+    Long getTotalQuantityInCarts(@Param("productId") Long productId);
+
+    boolean existsByProduct_Id(Long productId);
+
+    boolean existsByProduct_Category_Id(Long categoryId);
+
 }
