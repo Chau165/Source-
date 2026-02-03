@@ -16,13 +16,15 @@ import java.io.IOException;
 public class CorsConfig extends OncePerRequestFilter {
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        
-        // Set CORS headers
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+
         setCorsHeaders(response, request);
 
-        // Giải quyết request OPTIONS 
+        // Preflight request
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatus(HttpServletResponse.SC_OK);
             return;
@@ -34,30 +36,40 @@ public class CorsConfig extends OncePerRequestFilter {
     private void setCorsHeaders(HttpServletResponse res, HttpServletRequest req) {
         String origin = req.getHeader("Origin");
 
-        // Cho phép localhost, Vercel frontend và Railway API
-        boolean allowed = origin != null && (
+        // Không phải CORS request thì bỏ qua
+        if (origin == null) return;
+
+        // Whitelist origin
+        boolean allowed =
                 origin.equals("http://localhost:5173") ||
                 origin.equals("http://127.0.0.1:5173") ||
-                origin.equals("https://productcatalog-pf31yzavo-minh-chaus-projects-11c47b5c.vercel.app") ||
-                origin.equals("https://product-catalog-api-production-44d9.up.railway.app") ||
                 origin.endsWith(".vercel.app") ||
-                origin.endsWith(".railway.app")
+                origin.endsWith(".railway.app");
+
+        // Không allow thì không set CORS header
+        if (!allowed) return;
+
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader("Vary", "Origin");
+
+        res.setHeader(
+                "Access-Control-Allow-Methods",
+                "GET, POST, PUT, DELETE, PATCH, OPTIONS"
         );
 
-        if (allowed) {
-            res.setHeader("Access-Control-Allow-Origin", origin);
-            res.setHeader("Access-Control-Allow-Credentials", "true");
+        // Echo lại headers mà browser yêu cầu (tránh thiếu accept, authorization,…)
+        String requestHeaders = req.getHeader("Access-Control-Request-Headers");
+        if (requestHeaders != null && !requestHeaders.isBlank()) {
+            res.setHeader("Access-Control-Allow-Headers", requestHeaders);
         } else {
-            res.setHeader("Access-Control-Allow-Origin", "null");
+            res.setHeader(
+                    "Access-Control-Allow-Headers",
+                    "Content-Type, Authorization, Accept"
+            );
         }
 
-        res.setHeader("Vary", "Origin");
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-
-        //  Thêm toàn bộ header FE thực sự gửi (bao gồm ngrok-skip-browser-warning)
-        res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, ngrok-skip-browser-warning");
-
-        // FE nếu cần đọc Authorization từ response thì expose:
+        // Cho FE đọc Authorization từ response nếu cần
         res.setHeader("Access-Control-Expose-Headers", "Authorization");
 
         // Cache preflight 1 ngày
