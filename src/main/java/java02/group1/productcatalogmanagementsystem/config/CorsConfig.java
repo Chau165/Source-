@@ -34,12 +34,14 @@ public class CorsConfig extends OncePerRequestFilter {
     private void setCorsHeaders(HttpServletResponse res, HttpServletRequest req) {
         String origin = req.getHeader("Origin");
 
-        // Cho phép localhost và Vercel frontend
+        // Cho phép localhost, Vercel frontend và Railway API
         boolean allowed = origin != null && (
                 origin.equals("http://localhost:5173") ||
                 origin.equals("http://127.0.0.1:5173") ||
                 origin.equals("https://productcatalog-pf31yzavo-minh-chaus-projects-11c47b5c.vercel.app") ||
-                origin.endsWith(".vercel.app")
+                origin.equals("https://product-catalog-api-production-44d9.up.railway.app") ||
+                origin.endsWith(".vercel.app") ||
+                origin.endsWith(".railway.app")
         );
 
         if (allowed) {
